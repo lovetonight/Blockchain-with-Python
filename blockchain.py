@@ -1,4 +1,5 @@
 import hashlib
+import json
 
 
 class Block:
@@ -9,16 +10,16 @@ class Block:
         self.nonce = 0
 
 
-def hash(Block):
-    data = Block.data + Block.prev_hash + str(Block.nonce)
+def hash(block):
+    data = json.dumps(block.data) + block.prev_hash + str(block.nonce)
     data = data.encode('utf-8')
     return hashlib.sha256(data).hexdigest()
 
 
 class Blockchain():
-    def __init__(self):
+    def __init__(self, owner):
         self.chain = []
-
+        self.owner = owner
         block = Block("Dao Trong Hoan")
         block.hash = hash(block)
         self.chain.append(block)
@@ -32,6 +33,7 @@ class Blockchain():
 
     def add_block(self, data):
         block = Block(data)
+        block.data.append({"from": "", "to": self.owner, "amount": 1000})
         while hash(block).startswith("00") == False:
             block.nonce = block.nonce + 1
         block.hash = hash(block)
@@ -48,11 +50,32 @@ class Blockchain():
                 return False
         return True
 
+    def get_balance(self, person):
+        balance = 0
+        for block in self.chain:
+            if type(block.data) != list:
+                continue
+            for transfer in block.data:
+                if transfer["from"] == person:
+                    balance = balance - transfer["amount"]
+                if transfer["to"] == person:
+                    balance = balance + transfer["amount"]
+        return balance
 
-blockchain = Blockchain()
-blockchain.add_block("Nguyen Thanh Luan")
-blockchain.add_block("Nguyen Phuong Linh")
-blockchain.print()
-blockchain.chain[1].data = "Tran Minh Hiep"
-blockchain.print()
-print(blockchain.is_valid())
+
+blockchain = Blockchain("Hoan")
+# blockchain.add_block("Nguyen Thanh Luan")
+# blockchain.add_block("Nguyen Phuong Linh")
+# blockchain.print()
+# blockchain.chain[1].data = "Tran Minh Hiep"
+# blockchain.print()
+# print(blockchain.is_valid())
+blockchain.add_block([{"from": "Hoan", "to": "Luan", "amount": 60},
+                     {"from": "Hoan", "to": "Linh", "amount": 40},
+                     {"from": "Luan", "to": "Linh", "amount": 30},
+                     {"from": "Linh", "to": "Hoan", "amount": 20}])
+blockchain.add_block([{"from": "Hiep", "to": "Hoan", "amount": 50},
+                     {"from": "Hiep", "to": "Linh", "amount": 40},
+                     {"from": "Linh", "to": "Hoan", "amount": 20}])
+print(blockchain.get_balance("Hoan"))
+# blockchain.print()
